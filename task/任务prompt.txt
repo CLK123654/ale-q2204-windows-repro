@@ -4,4 +4,4 @@
 
 在校正温度基础上，根据产品规则计算覆盖率并形成连续温度偏差段。人工拦截、校准缺口、覆盖率不足和偏差时长超限按字段说明给出的顺序决定HOLD、REVIEW或RELEASE。SQL可以自行组织查询、视图和临时对象，业务主键、时间口径与输出字段需要保持稳定。
 
-交付sql/coldchain_release_audit.sql、exports/release_decisions.csv、exports/calibration_gaps.csv、exports/excursion_episodes.csv和README.md。SQL应能在空coldchain schema中完成装载、计算与导出。放行结果供质量负责人处置批次，校准缺口交给计量管理员，偏差时段交给冷链运营人员。三份CSV按release_id可以相互复算，README.md说明执行变量、输入保护范围和每份结果的使用者。
+交付sql/coldchain_release_audit.sql、exports/release_decisions.csv、exports/calibration_gaps.csv、exports/excursion_episodes.csv和README.md。SQL应能在空coldchain schema中完成装载、计算与导出。放行结果供质量负责人处置批次，校准缺口交给计量管理员，偏差时段交给冷链运营人员。三份CSV按release_id可以相互复算，README.md说明运行目录、输入保护范围和每份结果的使用者。

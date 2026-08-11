@@ -62,11 +62,11 @@ CREATE TABLE coldchain.hold_notices (
   CHECK (hold_end IS NULL OR hold_start < hold_end)
 );
 
-\copy coldchain.shipments FROM :'shipments_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy coldchain.temperature_readings FROM :'readings_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy coldchain.calibration_events FROM :'calibrations_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy coldchain.release_policy FROM :'policy_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy coldchain.hold_notices FROM :'holds_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy coldchain.shipments FROM 'input/shipments.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy coldchain.temperature_readings FROM 'input/temperature_readings.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy coldchain.calibration_events FROM 'input/calibration_events.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy coldchain.release_policy FROM 'input/release_policy.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy coldchain.hold_notices FROM 'input/hold_notices.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
 
 CREATE INDEX temperature_readings_scope_idx
   ON coldchain.temperature_readings (shipment_id, sensor_id, observed_at, received_at);
@@ -230,9 +230,9 @@ SELECT
   active_hold_count
 FROM metrics;
 
-\copy (SELECT release_id,shipment_id,decision,primary_reason,expected_readings,eligible_readings,evaluated_readings,calibration_gap_count,coverage_pct,excursion_minutes,active_hold_count FROM coldchain.release_decisions ORDER BY release_id) TO :'release_decisions_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy (SELECT release_id,shipment_id,sensor_id,reading_id,observed_at,decision_cutoff FROM coldchain.calibration_gaps ORDER BY release_id,observed_at,reading_id) TO :'calibration_gaps_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
-\copy (SELECT release_id,shipment_id,sensor_id,episode_no,episode_start,episode_end,duration_minutes,peak_corrected_temp_c,max_temp_c,peak_deviation_c FROM coldchain.excursion_episodes ORDER BY release_id,episode_start) TO :'excursion_episodes_file' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy (SELECT release_id,shipment_id,decision,primary_reason,expected_readings,eligible_readings,evaluated_readings,calibration_gap_count,coverage_pct,excursion_minutes,active_hold_count FROM coldchain.release_decisions ORDER BY release_id) TO 'exports/release_decisions.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy (SELECT release_id,shipment_id,sensor_id,reading_id,observed_at,decision_cutoff FROM coldchain.calibration_gaps ORDER BY release_id,observed_at,reading_id) TO 'exports/calibration_gaps.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy (SELECT release_id,shipment_id,sensor_id,episode_no,episode_start,episode_end,duration_minutes,peak_corrected_temp_c,max_temp_c,peak_deviation_c FROM coldchain.excursion_episodes ORDER BY release_id,episode_start) TO 'exports/excursion_episodes.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
 
 COMMIT;
 `;
@@ -245,5 +245,5 @@ exports/release_decisions.csv交给质量放行负责人处理运输批次。
 exports/calibration_gaps.csv交给计量管理员补齐历史校准记录。
 exports/excursion_episodes.csv交给冷链运营人员核对温度偏差时段。
 
-使用psql17执行SQL时，需要通过变量传入五份输入文件和三份导出文件的本地路径。SQL会重建coldchain schema，输入文件保持只读。CSV行顺序不参与业务判断，release_id和reading_id用于稳定定位记录。
+使用psql17执行SQL时，以交付根目录作为当前目录，把五份CSV放入input目录，并先建立空exports目录。SQL会重建coldchain schema，输入文件保持只读。CSV行顺序不参与业务判断，release_id和reading_id用于稳定定位记录。
 `;
