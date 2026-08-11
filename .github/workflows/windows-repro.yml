@@ -1,0 +1,63 @@
+name: q2204-windows-repro
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.4
+
+      - name: Start PostgreSQL17
+        shell: pwsh
+        run: |
+          $service = Get-Service -Name postgresql-x64-17 -ErrorAction Stop
+          Set-Service -Name $service.Name -StartupType Manual
+          Start-Service -Name $service.Name
+          $psql = Join-Path $env:PGBIN psql.exe
+          $ready = Join-Path $env:PGBIN pg_isready.exe
+          for ($attempt = 1; $attempt -le 15; $attempt++) {
+            & $ready --host=127.0.0.1 --port=5432 --username=postgres
+            if ($LASTEXITCODE -eq 0) { break }
+            Start-Sleep -Seconds 2
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL17未就绪' }
+          "PSQL_PATH=$psql" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PGHOST=127.0.0.1" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PGPORT=5432" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PGUSER=postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PGPASSWORD=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PGDATABASE=postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:PGPASSWORD = 'root'
+          & $psql --host=127.0.0.1 --port=5432 --username=postgres --dbname=postgres --command='select version();'
+
+      - name: Run complete Windows reproduction
+        shell: pwsh
+        run: |
+          $inputRoot = Join-Path $env:RUNNER_TEMP q2204-input
+          $referenceRoot = Join-Path $env:RUNNER_TEMP q2204-reference
+          $evidenceRoot = Join-Path $PWD qa-output
+          Expand-Archive -LiteralPath task\输入数据包.zip -DestinationPath $inputRoot
+          Expand-Archive -LiteralPath task\reference.zip -DestinationPath $referenceRoot
+          node qa\windows-verify.mjs task $inputRoot $referenceRoot implementation\run.mjs $evidenceRoot
+
+      - name: Upload independent evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: q2204-windows-evidence
+          path: qa-output
+          if-no-files-found: error

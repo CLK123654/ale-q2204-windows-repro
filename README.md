@@ -1,0 +1,7 @@
+# 冷链放行争议的历史校准复核
+
+本仓库只包含一道PostgreSQL任务。task目录保存最终四附件和题目正文，implementation目录保存SQL运行入口，qa目录保存结果核对脚本。运输、温度、校准、产品规则和人工拦截数据均为本仓库自造材料，不含个人信息、内部地址或生产凭据。
+
+Windows工作流使用Windows Server2025运行器自带的PostgreSQL17与固定Node.js20版本。验证脚本在两个独立目录中各执行两次完整重建，逐文件核对Reference，并检查一项产品规则变化和一项重复业务主键错误。
+
+工作流入口位于.github/workflows/windows-repro.yml。

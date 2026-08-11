@@ -1,0 +1,7 @@
+冷链质量团队正在处理一批已经放行的运输争议。部分校准记录在原放行截止后才补录，另有校准版本在截止前已经撤销。直接按数据库当前状态重算，会把当时看不到的信息带回历史决定。
+
+输入数据包提供运输清单、温度读数、校准事件、产品规则、人工拦截和字段说明。请使用PostgreSQL Client连接本地PostgreSQL17，将五份业务数据装入有完整性约束的关系表。读数先按运输区间、设备状态和平台接收截止时点收敛，再按观测时间与记录时间选择当时可见的校准版本。没有可见校准的读数不能按零偏移处理。
+
+在校正温度基础上，根据产品规则计算覆盖率并形成连续温度偏差段。人工拦截、校准缺口、覆盖率不足和偏差时长超限按字段说明给出的顺序决定HOLD、REVIEW或RELEASE。SQL可以自行组织查询、视图和临时对象，业务主键、时间口径与输出字段需要保持稳定。
+
+交付sql/coldchain_release_audit.sql、exports/release_decisions.csv、exports/calibration_gaps.csv、exports/excursion_episodes.csv和README.md。SQL应能在空coldchain schema中完成装载、计算与导出。放行结果供质量负责人处置批次，校准缺口交给计量管理员，偏差时段交给冷链运营人员。三份CSV按release_id可以相互复算，README.md说明执行变量、输入保护范围和每份结果的使用者。
